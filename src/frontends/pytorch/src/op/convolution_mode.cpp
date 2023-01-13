@@ -1,9 +1,9 @@
-// Copyright (C) 2018-2022 Intel Corporation
+// Copyright (C) 2018-2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 //
 
 #include "openvino/frontend/pytorch/node_context.hpp"
-#include "openvino/opsets/opset8.hpp"
+#include "openvino/opsets/opset10.hpp"
 #include "utils.hpp"
 
 namespace ov {
@@ -29,15 +29,15 @@ OutputVector translate_convolution_mode(NodeContext& context) {
 
     std::shared_ptr<ov::Node> conv;
     if (groups == 1) {
-        conv = context.mark_node(std::make_shared<opset8::Convolution>(context.get_input(0),
-                                                                       context.get_input(1),
-                                                                       strides,
-                                                                       pad_const,
-                                                                       pad_const,
-                                                                       dilations,
-                                                                       auto_pad_mode));
+        conv = context.mark_node(std::make_shared<opset10::Convolution>(context.get_input(0),
+                                                                        context.get_input(1),
+                                                                        strides,
+                                                                        pad_const,
+                                                                        pad_const,
+                                                                        dilations,
+                                                                        auto_pad_mode));
     } else {
-        conv = context.mark_node(std::make_shared<opset8::GroupConvolution>(
+        conv = context.mark_node(std::make_shared<opset10::GroupConvolution>(
             context.get_input(0),
             context.mark_output(reshape_kernel_for_group(context, context.get_input(0), context.get_input(1), groups)),
             strides,
@@ -54,7 +54,7 @@ OutputVector translate_convolution_mode(NodeContext& context) {
             bias = reshape_conv_bias(context, bias, conv);
         }
 
-        conv = context.mark_node(std::make_shared<opset8::Add>(conv, bias));
+        conv = context.mark_node(std::make_shared<opset10::Add>(conv, bias));
     }
     return {context.mark_output(conv)};
 };

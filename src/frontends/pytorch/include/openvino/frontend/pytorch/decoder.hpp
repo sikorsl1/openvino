@@ -1,14 +1,15 @@
-// Copyright (C) 2018-2022 Intel Corporation
+// Copyright (C) 2018-2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 //
 
 #pragma once
 
-#include <iostream>
 #include <memory>
 
-// TODO: rough!
-#include "openvino/openvino.hpp"
+#include "openvino/core/any.hpp"
+#include "openvino/core/node.hpp"
+#include "openvino/core/node_output.hpp"
+#include "openvino/core/partial_shape.hpp"
 
 namespace ov {
 namespace frontend {
@@ -16,8 +17,7 @@ namespace pytorch {
 
 // Extendable type system which reflects TorchScript supported python data types
 // Type nestings are built with the help of ov::Any
-
-namespace Type {
+namespace type {
 
 struct Tensor {
     Tensor() = default;
@@ -42,25 +42,7 @@ struct Dict;
 struct NamedTuple;
 struct Union;
 
-inline void print(const Any& x) {
-    std::cout << "XDecoder.print: {" << x.type_info().name() << "}: ";
-    if (x.is<element::Type>()) {
-        std::cout << x.as<element::Type>();
-    } else if (x.is<Tensor>()) {
-        std::cout << "Tensor[";
-        print(x.as<Tensor>().element_type);
-        std::cout << "]";
-    } else if (x.is<List>()) {
-        std::cout << "List[";
-        print(x.as<List>().element_type);
-        std::cout << "]";
-    } else {
-        std::cout << "UNKNWON_ANY_TYPE";
-    }
-    std::cout << std::flush;
-}
-
-}  // namespace Type
+}  // namespace type
 
 /// Plays a role of node, block and module decoder (kind of temporary fat API)
 struct Decoder {  // TODO: Is it required to be enable_shared_from_this?
@@ -108,6 +90,8 @@ public:
 
     // TODO: required? can be implemented in the context of a single node?
     virtual bool input_is_none(size_t index) const = 0;
+
+    virtual ov::OutputVector try_decode_get_attr() = 0;
 
     // Work for natural constant nodes, e.g. for prim::Constant; don't know other nodes kinds that fit
     // TODO: why OutputVector instead of just single output?
@@ -162,9 +146,6 @@ public:
 
     /// Probably this toghether with immediate nodes visitor is a replacement for visit_subgraphs with an index
     virtual std::shared_ptr<Decoder> get_subgraph_decoder(size_t index) const = 0;
-
-    /// Dumps debug info
-    virtual void debug() const = 0;
 };
 
 }  // namespace pytorch

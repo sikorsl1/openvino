@@ -131,9 +131,13 @@ std::string convert_path_to_string(const py::object& path) {
     if (py::isinstance(path, Path) || py::isinstance<py::str>(path)) {
         return path.str();
     }
+    // Convert bytes to string
+    if (py::isinstance<py::bytes>(path)) {
+        return path.cast<std::string>();
+    }
     std::stringstream str;
     str << "Path: '" << path << "'"
-        << " does not exist. Please provide valid model's path either as a string or pathlib.Path. "
+        << " does not exist. Please provide valid model's path either as a string, bytes or pathlib.Path. "
            "Examples:\n(1) '/home/user/models/model.onnx'\n(2) Path('/home/user/models/model/model.onnx')";
     throw ov::Exception(str.str());
 }
@@ -190,6 +194,10 @@ ov::Any py_object_to_any(const py::object& py_obj) {
             }
         }
 
+        // In case of empty vector works like with vector of strings
+        if (_list.empty())
+            return _list.cast<std::vector<std::string>>();
+
         switch (detected_type) {
         case PY_TYPE::STR:
             return _list.cast<std::vector<std::string>>();
@@ -220,12 +228,10 @@ ov::Any py_object_to_any(const py::object& py_obj) {
     } else if (py::isinstance<ov::Affinity>(py_obj)) {
         return py::cast<ov::Affinity>(py_obj);
         // Custom PT FE Types
-    } else if (py::isinstance<ov::frontend::pytorch::Type::Tensor>(py_obj)) {
-        // std::cout << "[ ANY PYBIND ] Detected Tensor\n";
-        return py::cast<ov::frontend::pytorch::Type::Tensor>(py_obj);
-    } else if (py::isinstance<ov::frontend::pytorch::Type::List>(py_obj)) {
-        // std::cout << "[ ANY PYBIND ] Detected List\n";
-        return py::cast<ov::frontend::pytorch::Type::List>(py_obj);
+    } else if (py::isinstance<ov::frontend::pytorch::type::Tensor>(py_obj)) {
+        return py::cast<ov::frontend::pytorch::type::Tensor>(py_obj);
+    } else if (py::isinstance<ov::frontend::pytorch::type::List>(py_obj)) {
+        return py::cast<ov::frontend::pytorch::type::List>(py_obj);
         // If there is no match fallback to py::object
     } else if (py::isinstance<py::object>(py_obj)) {
         return py_obj;

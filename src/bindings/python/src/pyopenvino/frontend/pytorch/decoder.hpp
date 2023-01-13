@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2022 Intel Corporation
+// Copyright (C) 2018-2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 //
 
@@ -19,7 +19,7 @@ class PyDecoder : public ov::frontend::pytorch::Decoder {
     }
 
     size_t input(size_t index) const override {
-        PYBIND11_OVERRIDE_PURE(size_t, Decoder, input, index);
+        PYBIND11_OVERRIDE_PURE(size_t, Decoder, get_input, index);
     }
 
     std::vector<size_t> inputs() const override {
@@ -52,6 +52,10 @@ class PyDecoder : public ov::frontend::pytorch::Decoder {
 
     bool input_is_none(size_t index) const override {
         PYBIND11_OVERRIDE_PURE(bool, Decoder, input_is_none, index);
+    }
+
+    ov::OutputVector try_decode_get_attr() override {
+        PYBIND11_OVERRIDE_PURE(ov::OutputVector, Decoder, try_decode_get_attr);
     }
 
     ov::OutputVector as_constant() override {
@@ -96,10 +100,6 @@ class PyDecoder : public ov::frontend::pytorch::Decoder {
 
     std::shared_ptr<Decoder> get_subgraph_decoder(size_t index) const override {
         PYBIND11_OVERRIDE_PURE(std::shared_ptr<Decoder>, Decoder, get_subgraph_decoder, index);
-    }
-
-    void debug() const override {
-        PYBIND11_OVERRIDE_PURE(void, Decoder, debug);
     }
 };
 

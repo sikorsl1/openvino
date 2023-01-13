@@ -1,9 +1,9 @@
-// Copyright (C) 2018-2022 Intel Corporation
+// Copyright (C) 2018-2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 //
 
 #include "openvino/frontend/pytorch/node_context.hpp"
-#include "openvino/opsets/opset8.hpp"
+#include "openvino/opsets/opset10.hpp"
 #include "utils.hpp"
 
 namespace ov {
@@ -26,7 +26,7 @@ OutputVector translate_sum(NodeContext& context) {
         keep_dims = context.const_input<bool>(2);
     }
 
-    return {context.mark_node(std::make_shared<opset8::ReduceSum>(data, axes, keep_dims))};
+    return {context.mark_node(std::make_shared<opset10::ReduceSum>(data, axes, keep_dims))};
 };
 
 }  // namespace op

@@ -1,7 +1,8 @@
-# Copyright (C) 2018-2022 Intel Corporation
+# Copyright (C) 2018-2023 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
 import pytest
+
 from pytorch_layer_test_class import PytorchLayerTest
 
 
@@ -11,7 +12,6 @@ class TestSilu(PytorchLayerTest):
         return (np.random.randn(1, 3, 224, 224).astype(np.float32),)
 
     def create_model(self):
-
         import torch
         import torch.nn.functional as F
 
@@ -27,5 +27,6 @@ class TestSilu(PytorchLayerTest):
         return aten_silu(), ref_net, "aten::silu"
 
     @pytest.mark.nightly
+    @pytest.mark.precommit
     def test_silu(self, ie_device, precision, ir_version):
         self._test(*self.create_model(), ie_device, precision, ir_version)

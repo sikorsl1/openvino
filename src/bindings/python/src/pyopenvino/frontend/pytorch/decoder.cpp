@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2022 Intel Corporation
+// Copyright (C) 2018-2023 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 //
 
@@ -17,11 +17,6 @@ using ov::PartialShape;
 using ov::OutputVector;
 using ov::Node;
 
-namespace {
-
-    
-
-}
 
 void regclass_frontend_pytorch_decoder(py::module m) {
     py::class_<Decoder, PyDecoder, std::shared_ptr<Decoder>>(m, "_FrontEndPytorchDecoder")
@@ -31,11 +26,10 @@ void regclass_frontend_pytorch_decoder(py::module m) {
 
     // Register classes for TS type system
 
-    py::class_<Type::Tensor>(type_module, "Tensor").
+    py::class_<type::Tensor>(type_module, "Tensor").
         def(py::init<Any>());
-    py::class_<Type::List>(type_module, "List").
+    py::class_<type::List>(type_module, "List").
         def(py::init<Any>());
-    py::class_<Type::Str>(type_module, "Str").
+    py::class_<type::Str>(type_module, "Str").
         def(py::init<>());
-    type_module.def("print", Type::print);
 }

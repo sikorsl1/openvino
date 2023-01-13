@@ -1,4 +1,4 @@
-# Copyright (C) 2018-2022 Intel Corporation
+# Copyright (C) 2018-2023 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
 import itertools
@@ -6,9 +6,9 @@ import warnings
 
 import numpy as np
 from common.constants import test_device, test_precision
+from openvino.frontend.pytorch.decoder import TorchScriptPythonDecoder
 
 from openvino.frontend import FrontEndManager
-from openvino.frontend.pytorch.decoder import TorchScriptPythonDecoder
 from openvino.runtime import Core, Type, PartialShape
 
 
@@ -34,7 +34,8 @@ class PytorchLayerTest:
                     return True
         return False
 
-    def _test(self, model, ref_net, kind, ie_device, precision, ir_version, infer_timeout=60, dynamic_shapes=True, **kwargs):
+    def _test(self, model, ref_net, kind, ie_device, precision, ir_version, infer_timeout=60, dynamic_shapes=True,
+              **kwargs):
         """
         :param enabled_transforms/disabled_transforms: string with idxs of transforms that should be enabled/disabled.
                                                        Example: "transform_1,transform_2"
@@ -47,10 +48,11 @@ class PytorchLayerTest:
         with torch.no_grad():
             model.eval()
             if not kwargs.get('trace_model', False):
-                model = torch.jit.freeze(torch.jit.script(model))
+                model = torch.jit.script(model)
             else:
                 torch_inputs = [torch.from_numpy(inp) for inp in inputs]
-                model = torch.jit.freeze(torch.jit.trace(model, torch_inputs))
+                model = torch.jit.trace(model, torch_inputs)
+            model = torch.jit.freeze(model)
             graph = model.inlined_graph
             print(graph)
 
@@ -60,7 +62,7 @@ class PytorchLayerTest:
             fe_manager = FrontEndManager()
             fe = fe_manager.load_by_framework('pytorch')
 
-            decoder = TorchScriptPythonDecoder(graph)
+            decoder = TorchScriptPythonDecoder(model)
 
             im = fe.load(decoder)
             om = fe.convert(im)
@@ -88,7 +90,7 @@ class PytorchLayerTest:
         torch_inps = [torch.from_numpy(inp) for inp in inputs]
         fw_res = model(*torch_inps)
 
-        if not isinstance(fw_res, tuple):
+        if not isinstance(fw_res, (tuple)):
             fw_res = (fw_res,)
 
         output_list = list(infer_res.values())
@@ -105,7 +107,8 @@ class PytorchLayerTest:
                         assert ov_tensor == fw_tensor
                     assert type(fw_tensor) == type(ov_tensor)
                 continue
-            assert torch.tensor(np.array(ov_tensor)).dtype == fw_tensor.dtype
+            assert torch.tensor(np.array(
+                ov_tensor)).dtype == fw_tensor.dtype, f"dtype validation failed: {torch.tensor(np.array(ov_tensor)).dtype} != {fw_tensor.dtype}"
 
         if 'custom_eps' in kwargs and kwargs['custom_eps'] is not None:
             custom_eps = kwargs['custom_eps']
