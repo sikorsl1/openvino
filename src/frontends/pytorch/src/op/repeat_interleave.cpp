@@ -40,37 +40,38 @@ OutputVector translate_repeat_interleave(NodeContext& context) {
         if (repeats.size() == 1) {
             // case (repeats=number, dim=None)
             auto flat_shape = context.mark_node(opset10::Constant::create(element::i64, Shape{2}, {1, -1}));
-            auto reshape = std::make_shared<opset10::Reshape>(input, flat_shape, false);
-            auto tile = std::make_shared<opset10::Tile>(reshape, const_repeats);
+            auto reshape = context.mark_node(std::make_shared<opset10::Reshape>(input, flat_shape, false));
+            auto tile = context.mark_node(std::make_shared<opset10::Tile>(reshape, const_repeats));
             auto shape_perm = context.mark_node(opset10::Constant::create(element::i64, Shape{2}, {1, 0}));
-            auto transpose = std::make_shared<opset10::Transpose>(tile, shape_perm);
+            auto transpose = context.mark_node(std::make_shared<opset10::Transpose>(tile, shape_perm));
             result = std::make_shared<opset10::Reshape>(transpose, const_neg_1, false);
         } else {
             // case (repeats=tensor, dim=None)
             auto flat_shape = context.mark_node(opset10::Constant::create(element::i64, Shape{1}, {-1}));
-            auto reshape = std::make_shared<opset10::Reshape>(input, flat_shape, false);
+            auto reshape = context.mark_node(std::make_shared<opset10::Reshape>(input, flat_shape, false));
             OutputVector all_indices = generate_indices_from_repeats_tensor(repeats, context);
-            auto concat = std::make_shared<opset10::Concat>(all_indices, 0);
+            auto concat = context.mark_node(std::make_shared<opset10::Concat>(all_indices, 0));
             result = std::make_shared<opset10::Gather>(reshape, concat, const_0);
         }
     } else {
-        auto const_dim =
-            context.mark_node(opset10::Constant::create(element::i64, Shape{}, {context.const_input<int64_t>(2)}));
+        auto const_dim = context.get_input(2);
         if (repeats.size() == 1) {
             // case (repeats=number, dim=number)
-            auto input_shape = std::make_shared<opset10::ShapeOf>(input, element::i64);
-            auto input_dim_size = std::make_shared<opset10::Gather>(input_shape, const_dim, const_0);
-            auto range = std::make_shared<opset10::Range>(const_0, input_dim_size, const_1, element::i64);
-            auto range_unsqeezed = std::make_shared<opset10::Unsqueeze>(range, const_0);
-            auto tile = std::make_shared<opset10::Tile>(range_unsqeezed, const_repeats);
-            auto shape_perm = context.mark_node(opset10::Constant::create(element::i64, Shape{2}, {1, 0}));
-            auto transpose = std::make_shared<opset10::Transpose>(tile, shape_perm);
-            auto flatten = std::make_shared<opset10::Reshape>(transpose, const_neg_1, false);
+            auto input_shape = context.mark_node(std::make_shared<opset10::ShapeOf>(input, element::i64));
+            auto input_dim_size = context.mark_node(std::make_shared<opset10::Gather>(input_shape, const_dim, const_0));
+            auto range =
+                context.mark_node(std::make_shared<opset10::Range>(const_0, input_dim_size, const_1, element::i64));
+            auto range_unsqeezed = context.mark_node(std::make_shared<opset10::Unsqueeze>(range, const_0));
+            auto tile = context.mark_node(std::make_shared<opset10::Tile>(range_unsqeezed, const_repeats));
+            auto shape_perm =
+                context.mark_node(context.mark_node(opset10::Constant::create(element::i64, Shape{2}, {1, 0})));
+            auto transpose = context.mark_node(std::make_shared<opset10::Transpose>(tile, shape_perm));
+            auto flatten = context.mark_node(std::make_shared<opset10::Reshape>(transpose, const_neg_1, false));
             result = std::make_shared<opset10::Gather>(input, flatten, const_dim);
         } else {
             // case (repeats=tensor, dim=number)
             OutputVector all_indices = generate_indices_from_repeats_tensor(repeats, context);
-            auto concat = std::make_shared<opset10::Concat>(all_indices, 0);
+            auto concat = context.mark_node(std::make_shared<opset10::Concat>(all_indices, 0));
             result = std::make_shared<opset10::Gather>(input, concat, const_dim);
         }
     }
