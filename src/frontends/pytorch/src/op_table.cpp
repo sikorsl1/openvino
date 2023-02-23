@@ -32,6 +32,7 @@ OP_CONVERTER(translate_convolution);
 OP_CONVERTER(translate_convolution_mode);
 OP_CONVERTER(translate_dim);
 OP_CONVERTER(translate_div);
+OP_CONVERTER(translate_dtype);
 OP_CONVERTER(translate_elu);
 OP_CONVERTER(translate_embedding);
 OP_CONVERTER(translate_empty);
@@ -311,6 +312,7 @@ const std::map<std::string, PytorchCreatorFunction> get_supported_ops() {
         {"aten::zeros", op::translate_zeros},
         {"aten::zeros_like", op::translate_zeros_like},
         {"prim::Constant", op::translate_constant},
+        {"prim::dtype", op::translate_dtype},
         {"prim::GetAttr", op::translate_get_attr},
         {"prim::If", op::translate_if},
         {"prim::is_cuda", op::return_false_scalar},

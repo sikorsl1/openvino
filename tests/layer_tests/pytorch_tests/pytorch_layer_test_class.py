@@ -16,6 +16,7 @@ class PytorchLayerTest:
     _type_map = {
         "float64": Type.f64,
         "float32": Type.f32,
+        "float16": Type.f16,
         "bool": Type.boolean,
         "int32": Type.i32,
         "int64": Type.i64,
